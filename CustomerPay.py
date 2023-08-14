@@ -134,7 +134,7 @@ def main():
         'City': ['New York', 'Los Angeles', 'Chicago']
     }
     df = pd.DataFrame(data)
-    editiable_df=st.data_editor(df,column_config(""))
+    editiable_df=st.data_editor(df)
     # Establish Snowflake connection
     connection = snowflake_config
     cursor = connection.cursor()
