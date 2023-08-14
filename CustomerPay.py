@@ -6,38 +6,42 @@ import pandas as pd
 import streamlit as st 
 
 
-df = pd.DataFrame({'A' : [4,None], 'B' : [10,20],
-                   'C' : [100,50], 'D' : [-30,-50],
-                   'E' : [1500,800], 'F' : [0.258,1.366]})
 
-# Apply styler so that the A column will be displayed with integer value because there is None in it.
-df_style = df.style.format(precision=2, na_rep='MISSING', thousands=",", formatter={('A'): "{:.0f}"})
+data = {
+    'Name': ['Alice', 'Bob', 'Charlie'],
+    'Age': [25, 30, 22],
+    'City': ['New York', 'Los Angeles', 'Chicago']
+}
+df = pd.DataFrame(data)
+editiable_df=st.data_editor(df,column_config(""))
+# Establish Snowflake connection
+connection = snowflake_config
+cursor = connection.cursor()
+unique_id = uuid.uuid4()
+# Define the target table name
+target_table = 'Your_Target_Table'
 
-st.write('Current dataframe')
-st.dataframe(df_style)
+# Create a new stage (optional, but recommended for data loading)
+stage_name = 'MAIN.EmpData'
+file_name ="GSC_"+str(unique_id)+'.csv'
+cursor.execute(f"CREATE OR REPLACE STAGE {stage_name}")
 
-# We use a form to wait for the user to finish selecting columns.
-# The user would press the submit button when done.
-# This is done to optimize the streamlit application performance.
-# As we know streamlit will re-run the code from top to bottom
-# whenever the user changes the column selections.
-with st.form('form'):
-    sel_column = st.multiselect('Select column', df.columns,
-       help='Select a column to form a new dataframe. Press submit when done.')
-    drop_na = st.checkbox('Drop rows with missing value', value=True)
-    submitted = st.form_submit_button("Submit")
-if st.button("Show Changes"):
-    st.write('changed_records[Corrected_Category')
-    if st.button("SubmitChanges"):
-        st.write('Changes are deployed, Thank you')
+# Convert DataFrame to CSV and stage it
+csv_data = df.to_csv(file_name,index=False, header=False,sep=',', encoding='utf-8')
+cursor.execute(f"PUT file://{file_name} @EmpData")
+print(csv_data)
+stage_location = f'@{stage_name}'
+stage_uri = f'{stage_location}/data.csv'
+#csv_file = io.StringIO(csv_data)
+print("____________________________________________")
+print(unique_id)
+print(f"PUT file://data.csv @{stage_name}")
+#cursor.execute(f"PUT file://data.csv @EmpData")
+#cursor.execute(f"COPY INTO MAIN.TEMP_TABLE FROM (SELECT $1,$2,$3 FROM {stage_location} FILE_FORMAT=(TYPE=CSV))")
 
+# Commit and close connection
+connection.commit()
+cursor.close()
+connection.close()
 
-print(sel_column)    
-if submitted:
-    dfnew = df[sel_column]
-    if drop_na:
-        dfnew = dfnew.dropna()
-
-    st.write('New dataframe')
-    dfnew_style = dfnew.style.format(precision=2, na_rep='MISSING', thousands=",", formatter={('A'): "{:.0f}"})
-    st.dataframe(dfnew_style)
+print("Data has been inserted into the target table in Snowflake.")
