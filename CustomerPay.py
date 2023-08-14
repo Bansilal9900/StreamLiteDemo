@@ -148,15 +148,9 @@ def main():
     cursor.execute(f"CREATE OR REPLACE STAGE {stage_name}")
 
     # Convert DataFrame to CSV and stage it
-    csv_data = df.to_csv(file_name,index=False, header=False,sep=',', encoding='utf-8')
+    editiable_df.to_csv(file_name,index=False, header=False,sep=',', encoding='utf-8')
     cursor.execute(f"PUT file://{file_name} @EmpData")
-    print(csv_data)
-    stage_location = f'@{stage_name}'
-    stage_uri = f'{stage_location}/data.csv'
-    #csv_file = io.StringIO(csv_data)
-    print("____________________________________________")
-    print(unique_id)
-    print(f"PUT file://data.csv @{stage_name}")
+    print(f"PUT file://{file_name} @EmpData")
     #cursor.execute(f"PUT file://data.csv @EmpData")
     #cursor.execute(f"COPY INTO MAIN.TEMP_TABLE FROM (SELECT $1,$2,$3 FROM {stage_location} FILE_FORMAT=(TYPE=CSV))")
 
