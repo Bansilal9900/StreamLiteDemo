@@ -149,6 +149,7 @@ def main():
 
     # Convert DataFrame to CSV and stage it
     editiable_df.to_csv(file_name,index=False, header=False,sep=',', encoding='utf-8')
+    st.write(editiable_df)
     cursor.execute(f"PUT file://{file_name} @EmpData")
     print(f"PUT file://{file_name} @EmpData")
     #cursor.execute(f"PUT file://data.csv @EmpData")
